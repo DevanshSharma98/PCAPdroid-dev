@@ -156,6 +156,7 @@ public class CaptureService extends VpnService implements Runnable {
     private boolean mBlacklistsUpdateRequested;
     private boolean mFirewallSupported;
     private boolean mFirewallEnabled;
+    private boolean mDnsAdBlockEnabled;
     private boolean mBlockPrivateDns;
     private boolean mDnsEncrypted;
     private boolean mStrictDnsNoticeShown;
@@ -500,6 +501,7 @@ public class CaptureService extends VpnService implements Runnable {
         mFirewallSupported = !mSettings.readFromPcap() && !mSettings.root_capture
                 && mBilling.isPurchased(Billing.FIREWALL_SKU);
         mFirewallEnabled = mFirewallSupported && mPrefs.getBoolean(Prefs.PREF_FIREWALL, true);
+        mDnsAdBlockEnabled = mFirewallSupported && mPrefs.getBoolean(Prefs.PREF_DNS_ADBLOCK, false);
 
         if(!mSettings.root_capture && !mSettings.readFromPcap()) {
             Log.i(TAG, "Using DNS server " + dns_server);
@@ -1566,6 +1568,7 @@ public class CaptureService extends VpnService implements Runnable {
     public int malwareDetectionEnabled() { return(mMalwareDetectionEnabled ? 1 : 0); }
 
     public int firewallEnabled() { return(mFirewallEnabled ? 1 : 0); }
+    public int dnsAdblockEnabled() { return(mDnsAdBlockEnabled ? 1 : 0); }
 
     public int dumpExtensionsEnabled() { return(mSettings.dump_extensions ? 1 : 0); }
 
@@ -1879,6 +1882,14 @@ public class CaptureService extends VpnService implements Runnable {
         nativeSetFirewallEnabled(enabled);
     }
 
+    public static void setDnsAdBlockEnabled(boolean enabled) {
+        if(INSTANCE == null)
+            return;
+
+        INSTANCE.mDnsAdBlockEnabled = enabled;
+        nativeSetDnsAdBlockEnabled(enabled);
+    }
+
     public static @NonNull CaptureStats getStats() {
         CaptureStats stats = lastStats.getValue();
         return((stats != null) ? stats : new CaptureStats());
@@ -1942,6 +1953,7 @@ public class CaptureService extends VpnService implements Runnable {
     public static native void askStatsDump();
     public static native byte[] getPcapHeader();
     public static native void nativeSetFirewallEnabled(boolean enabled);
+    private static native void nativeSetDnsAdBlockEnabled(boolean enabled);
     public static native int getNumCheckedMalwareConnections();
     public static native int getNumCheckedFirewallConnections();
     public static native int rootCmd(String prog, String args);

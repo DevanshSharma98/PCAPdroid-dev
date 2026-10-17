@@ -305,6 +305,8 @@ typedef struct pcapdroid {
         bool enabled;
         blacklist_t *bl;     // blocklist
         blacklist_t *new_bl;
+        bool dns_adblock_enabled;
+        blacklist_t *dns_bl; // downloaded DNS ad-block domains
         bool wl_enabled;
         blacklist_t *wl;     // whitelist
         blacklist_t *new_wl;

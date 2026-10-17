@@ -542,6 +542,13 @@ static void check_domain_block_rules(pcapdroid_t *pd, pd_conn_t *data, const zdt
                 }
             }
         }
+
+        if(pd->firewall.enabled && pd->firewall.dns_adblock_enabled && pd->firewall.dns_bl &&
+           blacklist_match_domain(pd->firewall.dns_bl, data->info)) {
+            data->to_block = true;
+            data->fw_app_block = false;
+            log_d("DNS ad-blocked domain [%s]", data->info);
+        }
     }
 }
 
@@ -1227,6 +1234,10 @@ static int recompute_conn_block_cb(pcapdroid_t *pd, const zdtun_5tuple_t *tuple,
                          (data->info && data->info[0] && blacklist_match_domain(fw_bl, data->info)) ||
                          blacklist_match_country(fw_bl, data->country_code);
 
+        if(!data->to_block && pd->firewall.dns_adblock_enabled && pd->firewall.dns_bl &&
+           data->info && data->info[0])
+            data->to_block = blacklist_match_domain(pd->firewall.dns_bl, data->info);
+
         if(!data->to_block && blacklist_match_uid(fw_bl, data->uid) && !firewall_app_allowlisted(pd, tuple, data)) {
             data->to_block = true;
             data->fw_app_block = true;
@@ -1508,6 +1519,20 @@ int pd_run(pcapdroid_t *pd) {
 
     pd->ip_to_host = ip_lru_init(MAX_HOST_LRU_SIZE);
 
+    if(pd->vpn_capture) {
+        char path[PATH_MAX];
+        snprintf(path, sizeof(path), "%s%s", pd->filesdir, "dns_adblock_domains.txt");
+        blacklist_t *dns_bl = blacklist_init();
+        if(dns_bl) {
+            blacklist_stats_t stats;
+            if(blacklist_load_file(dns_bl, path, DOMAIN_BLACKLIST, &stats) >= 0) {
+                pd->firewall.dns_bl = dns_bl;
+                log_i("Loaded %d local DNS ad-block domains", stats.num_rules);
+            } else
+                blacklist_destroy(dns_bl);
+        }
+    }
+
     if(pd->malware_detection.enabled && pd->cb.load_blacklists_info)
         pd->cb.load_blacklists_info(pd);
 
@@ -1565,6 +1590,8 @@ int pd_run(pcapdroid_t *pd) {
         blacklist_destroy(pd->firewall.bl);
     if(pd->firewall.new_bl)
         blacklist_destroy(pd->firewall.new_bl);
+    if(pd->firewall.dns_bl)
+        blacklist_destroy(pd->firewall.dns_bl);
     if(pd->firewall.wl)
         blacklist_destroy(pd->firewall.wl);
     if(pd->firewall.new_wl)

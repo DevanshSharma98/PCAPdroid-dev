@@ -47,6 +47,7 @@ import androidx.preference.PreferenceManager;
 
 import com.emanuelef.remote_capture.CaptureService;
 import com.emanuelef.remote_capture.ConnectionsRegister;
+import com.emanuelef.remote_capture.DnsAdBlocklist;
 import com.emanuelef.remote_capture.Log;
 import com.emanuelef.remote_capture.PCAPdroid;
 import com.emanuelef.remote_capture.R;
@@ -73,6 +74,7 @@ public class FirewallStatus extends Fragment implements MenuProvider {
     private TextView mNumChecked;
     private TextView mNumRules;
     private TextView mLastBlock;
+    private boolean mUpdatingAdBlockList;
     private Blocklist mBlocklist;
     private MatchList mWhitelist;
     private int mOkColor, mWarnColor, mGrayColor;
@@ -145,6 +147,7 @@ public class FirewallStatus extends Fragment implements MenuProvider {
 
         menu.findItem(R.id.whitelist_mode).setChecked(Prefs.isFirewallWhitelistMode(mPrefs));
         menu.findItem(R.id.block_new_apps).setChecked(Prefs.blockNewApps(mPrefs));
+        menu.findItem(R.id.dns_adblock).setChecked(mPrefs.getBoolean(Prefs.PREF_DNS_ADBLOCK, false));
         reloadMode(false);
     }
 
@@ -160,6 +163,36 @@ public class FirewallStatus extends Fragment implements MenuProvider {
             boolean checked = !item.isChecked();
             item.setChecked(checked);
             mPrefs.edit().putBoolean(Prefs.PREF_BLOCK_NEW_APPS, checked).apply();
+            return true;
+        } else if(id == R.id.dns_adblock) {
+            boolean checked = !item.isChecked();
+            if(checked && !DnsAdBlocklist.isDownloaded(requireContext())) {
+                Utils.showToastLong(requireContext(), R.string.dns_adblock_list_required);
+                return true;
+            }
+
+            item.setChecked(checked);
+            mPrefs.edit().putBoolean(Prefs.PREF_DNS_ADBLOCK, checked).apply();
+            CaptureService.setDnsAdBlockEnabled(checked);
+            return true;
+        } else if(id == R.id.update_dns_adblock) {
+            if(mUpdatingAdBlockList)
+                return true;
+
+            mUpdatingAdBlockList = true;
+            Context appContext = requireContext().getApplicationContext();
+            new Thread(() -> {
+                int count = DnsAdBlocklist.update(appContext);
+                mHandler.post(() -> {
+                    mUpdatingAdBlockList = false;
+                    if(!isAdded())
+                        return;
+                    if(count > 0)
+                        Utils.showToastLong(requireContext(), R.string.dns_adblock_update_ok, count);
+                    else
+                        Utils.showToastLong(requireContext(), R.string.dns_adblock_update_failed);
+                });
+            }, "DNSAdBlocklistUpdate").start();
             return true;
         } else if(id == R.id.whitelist_mode) {
             boolean checked = !item.isChecked();

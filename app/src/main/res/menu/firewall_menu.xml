@@ -30,4 +30,17 @@
         android:orderInCategory="30"
         android:checkable="true"
         app:showAsAction="never" />
+
+    <item
+        android:id="@+id/dns_adblock"
+        android:title="@string/dns_adblock"
+        android:orderInCategory="35"
+        android:checkable="true"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/update_dns_adblock"
+        android:title="@string/update_dns_adblock"
+        android:orderInCategory="40"
+        app:showAsAction="never" />
 </menu>

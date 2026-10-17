@@ -712,6 +712,7 @@ Java_com_emanuelef_remote_1capture_CaptureService_runPacketLoop(JNIEnv *env, jcl
             },
             .firewall = {
                     .enabled = (bool) getIntPref(env, vpn, "firewallEnabled"),
+                    .dns_adblock_enabled = (bool) getIntPref(env, vpn, "dnsAdblockEnabled"),
             },
             .tls_decryption = {
                     .enabled = (bool) getIntPref(env, vpn, "isTlsDecryptionEnabled"),
@@ -1109,6 +1110,17 @@ Java_com_emanuelef_remote_1capture_CaptureService_nativeSetFirewallEnabled(JNIEn
     }
 
     pd->firewall.enabled = enabled;
+}
+
+JNIEXPORT void JNICALL
+Java_com_emanuelef_remote_1capture_CaptureService_nativeSetDnsAdBlockEnabled(JNIEnv *env, jclass clazz, jboolean enabled) {
+    pcapdroid_t *pd = global_pd;
+    if(!pd) {
+        log_e("NULL pd instance");
+        return;
+    }
+
+    pd->firewall.dns_adblock_enabled = enabled;
 }
 
 /* ******************************************************* */
