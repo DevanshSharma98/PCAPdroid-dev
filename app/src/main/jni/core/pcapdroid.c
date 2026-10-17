@@ -317,6 +317,14 @@ void pd_purge_connection(pcapdroid_t *pd, pd_conn_t *data) {
 /* ******************************************************* */
 
 static int notif_connection(pcapdroid_t *pd, conn_array_t *arr, const zdtun_5tuple_t *tuple, pd_conn_t *data) {
+    /* In DNS-block-only mode, keep ordinary connections in the proxy but out of the UI log. */
+    if(pd->firewall.dns_block_only_mode && !data->dns_adblock_blocked)
+        return 0;
+
+    /* A DNS block can be discovered after the connection was created. Add it as a new row then. */
+    if(pd->firewall.dns_block_only_mode && !data->reported_to_ui)
+        arr = &pd->new_conns;
+
     // End the detection when the connection is closed
     // Always check this, even pending_notification are present
     if(data->status >= CONN_STATUS_CLOSED)
@@ -343,6 +351,7 @@ static int notif_connection(pcapdroid_t *pd, conn_array_t *arr, const zdtun_5tup
     slot->tuple = *tuple;
     slot->data = data;
     data->pending_notification = true;
+    data->reported_to_ui = true;
     return 0;
 }
 
@@ -547,6 +556,7 @@ static void check_domain_block_rules(pcapdroid_t *pd, pd_conn_t *data, const zdt
            blacklist_match_domain(pd->firewall.dns_bl, data->info)) {
             data->to_block = true;
             data->fw_app_block = false;
+            data->dns_adblock_blocked = true;
             log_d("DNS ad-blocked domain [%s]", data->info);
         }
     }

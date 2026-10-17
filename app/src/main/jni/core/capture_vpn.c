@@ -323,6 +323,12 @@ static void connection_closed(zdtun_t *zdt, const zdtun_conn_t *conn_info) {
         return;
     }
 
+    if(pd->firewall.dns_block_only_mode && !data->reported_to_ui) {
+        pd_giveup_dpi(pd, data, zdtun_conn_get_5tuple(conn_info));
+        pd_purge_connection(pd, data);
+        return;
+    }
+
     const zdtun_5tuple_t *tuple = zdtun_conn_get_5tuple(conn_info);
 
     // Send last notification

@@ -39,6 +39,13 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/dns_block_only_mode"
+        android:title="@string/dns_block_only_mode"
+        android:orderInCategory="36"
+        android:checkable="true"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/update_dns_adblock"
         android:title="@string/update_dns_adblock"
         android:orderInCategory="40"

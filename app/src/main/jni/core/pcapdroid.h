@@ -116,11 +116,13 @@ typedef struct {
         uint8_t pending_dns_queries;
     };
     bool pending_notification;
+    bool reported_to_ui;
     bool to_purge; // if true, free this pd_conn_t during the next sendConnectionsDump
     bool info_from_lru;
     bool blacklisted_internal;
     bool blacklisted_ip;
     bool blacklisted_domain;
+    bool dns_adblock_blocked;
     bool whitelisted_app;
     bool to_block;
     bool fw_app_block;
@@ -306,6 +308,7 @@ typedef struct pcapdroid {
         blacklist_t *bl;     // blocklist
         blacklist_t *new_bl;
         bool dns_adblock_enabled;
+        bool dns_block_only_mode;
         blacklist_t *dns_bl; // downloaded DNS ad-block domains
         bool wl_enabled;
         blacklist_t *wl;     // whitelist

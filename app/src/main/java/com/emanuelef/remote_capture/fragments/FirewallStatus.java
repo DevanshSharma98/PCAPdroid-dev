@@ -148,6 +148,7 @@ public class FirewallStatus extends Fragment implements MenuProvider {
         menu.findItem(R.id.whitelist_mode).setChecked(Prefs.isFirewallWhitelistMode(mPrefs));
         menu.findItem(R.id.block_new_apps).setChecked(Prefs.blockNewApps(mPrefs));
         menu.findItem(R.id.dns_adblock).setChecked(mPrefs.getBoolean(Prefs.PREF_DNS_ADBLOCK, false));
+        menu.findItem(R.id.dns_block_only_mode).setChecked(mPrefs.getBoolean(Prefs.PREF_DNS_BLOCK_ONLY_MODE, false));
         reloadMode(false);
     }
 
@@ -174,6 +175,12 @@ public class FirewallStatus extends Fragment implements MenuProvider {
             item.setChecked(checked);
             mPrefs.edit().putBoolean(Prefs.PREF_DNS_ADBLOCK, checked).apply();
             CaptureService.setDnsAdBlockEnabled(checked);
+            return true;
+        } else if(id == R.id.dns_block_only_mode) {
+            boolean checked = !item.isChecked();
+            item.setChecked(checked);
+            mPrefs.edit().putBoolean(Prefs.PREF_DNS_BLOCK_ONLY_MODE, checked).apply();
+            Utils.showToastLong(requireContext(), R.string.dns_block_only_mode_restart);
             return true;
         } else if(id == R.id.update_dns_adblock) {
             if(mUpdatingAdBlockList)

@@ -713,6 +713,7 @@ Java_com_emanuelef_remote_1capture_CaptureService_runPacketLoop(JNIEnv *env, jcl
             .firewall = {
                     .enabled = (bool) getIntPref(env, vpn, "firewallEnabled"),
                     .dns_adblock_enabled = (bool) getIntPref(env, vpn, "dnsAdblockEnabled"),
+                    .dns_block_only_mode = (bool) getIntPref(env, vpn, "dnsBlockOnlyMode"),
             },
             .tls_decryption = {
                     .enabled = (bool) getIntPref(env, vpn, "isTlsDecryptionEnabled"),

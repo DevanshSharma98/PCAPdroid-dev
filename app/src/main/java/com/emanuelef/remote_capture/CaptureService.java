@@ -1569,6 +1569,7 @@ public class CaptureService extends VpnService implements Runnable {
 
     public int firewallEnabled() { return(mFirewallEnabled ? 1 : 0); }
     public int dnsAdblockEnabled() { return(mDnsAdBlockEnabled ? 1 : 0); }
+    public int dnsBlockOnlyMode() { return(mPrefs.getBoolean(Prefs.PREF_DNS_BLOCK_ONLY_MODE, false) ? 1 : 0); }
 
     public int dumpExtensionsEnabled() { return(mSettings.dump_extensions ? 1 : 0); }
 

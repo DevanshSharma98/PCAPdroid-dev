@@ -438,6 +438,8 @@
     <string name="unblock_for_n_minutes">Unblock for %1$dm</string>
     <string name="block_new_apps">Block newly installed apps</string>
     <string name="dns_adblock">DNS ad blocking (domain threat lists)</string>
+    <string name="dns_block_only_mode">Show only blocked DNS connections</string>
+    <string name="dns_block_only_mode_restart">Saved. Restart capture to show only DNS blocks in the connection list.</string>
     <string name="update_dns_adblock">Update DNS threat lists</string>
     <string name="dns_adblock_list_required">Download the DNS ad-block list before enabling it</string>
     <string name="dns_adblock_update_ok">Downloaded %1$d blocked domains. Restart capture to load the new list.</string>
