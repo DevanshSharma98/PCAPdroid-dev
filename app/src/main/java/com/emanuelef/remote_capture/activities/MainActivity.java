@@ -625,11 +625,6 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         } else if(id == R.id.open_log) {
             Intent intent = new Intent(MainActivity.this, LogviewActivity.class);
             startActivity(intent);
-        } else if (id == R.id.action_donate) {
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(DONATE_URL));
-            Utils.startActivity(this, browserIntent);
-        } else if (id == R.id.action_open_telegram) {
-            openTelegram();
         } else if (id == R.id.action_open_user_guide) {
             Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(DOCS_URL));
             Utils.startActivity(this, browserIntent);
@@ -639,9 +634,6 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                 startActivity(intent);
             } else
                 Utils.showToast(this, R.string.start_capture_first);
-        } else if (id == R.id.action_about) {
-            Intent intent = new Intent(MainActivity.this, AboutActivity.class);
-            startActivity(intent);
         } else if (id == R.id.action_share_app) {
             String description = getString(R.string.about_text);
             String getApp = getString(R.string.get_app);
