@@ -77,6 +77,10 @@
             android:launchMode="singleTop"
             android:parentActivityName=".activities.MainActivity"/>
         <activity
+            android:name=".activities.SigintHuntActivity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".activities.MainActivity" />
+        <activity
             android:name=".activities.prefs.SettingsActivity"
             android:launchMode="singleTop"
             android:parentActivityName=".activities.MainActivity" />

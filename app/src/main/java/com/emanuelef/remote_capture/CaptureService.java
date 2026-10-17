@@ -36,10 +36,11 @@ import android.net.ConnectivityManager;
 import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.wifi.WifiInfo;
+import android.os.Build;
 import android.net.NetworkRequest;
 import android.net.Uri;
 import android.net.VpnService;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
@@ -1110,6 +1111,79 @@ public class CaptureService extends VpnService implements Runnable {
 
     public static boolean isDNSEncrypted() {
         return((INSTANCE != null) && INSTANCE.mDnsEncrypted);
+    }
+
+    public static String getSigintNetworkSnapshot() {
+        CaptureService inst = INSTANCE;
+        if(inst == null || inst.mUnderlyingNetwork == null)
+            return "Capture is not connected to an upstream network.";
+
+        ConnectivityManager cm = (ConnectivityManager) inst.getSystemService(Service.CONNECTIVITY_SERVICE);
+        NetworkCapabilities caps = cm.getNetworkCapabilities(inst.mUnderlyingNetwork);
+        LinkProperties props = cm.getLinkProperties(inst.mUnderlyingNetwork);
+        if(caps == null || props == null)
+            return "Upstream network details are not available yet.";
+
+        String transport = caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ? "Wi-Fi" :
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ? "Mobile data" :
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) ? "Ethernet" : "Other";
+        StringBuilder snapshot = new StringBuilder("Transport: ").append(transport);
+        if(caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+            snapshot.append("\nWi-Fi link security: ");
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && caps.getTransportInfo() instanceof WifiInfo) {
+                WifiInfo wifiInfo = (WifiInfo) caps.getTransportInfo();
+                switch(wifiInfo.getCurrentSecurityType()) {
+                    case WifiInfo.SECURITY_TYPE_OPEN:
+                        snapshot.append("OPEN — no Wi-Fi link encryption");
+                        break;
+                    case WifiInfo.SECURITY_TYPE_WEP:
+                        snapshot.append("WEP — obsolete and weak");
+                        break;
+                    case WifiInfo.SECURITY_TYPE_PSK:
+                        snapshot.append("WPA personal (password protected; exact strength not verified)");
+                        break;
+                    case WifiInfo.SECURITY_TYPE_SAE:
+                        snapshot.append("WPA3 personal");
+                        break;
+                    case WifiInfo.SECURITY_TYPE_EAP:
+                    case WifiInfo.SECURITY_TYPE_EAP_WPA3_ENTERPRISE:
+                    case WifiInfo.SECURITY_TYPE_EAP_WPA3_ENTERPRISE_192_BIT:
+                        snapshot.append("Enterprise authentication");
+                        break;
+                    case WifiInfo.SECURITY_TYPE_OWE:
+                        snapshot.append("Enhanced Open (encrypted, no password)");
+                        break;
+                    default:
+                        snapshot.append("unknown");
+                }
+            } else
+                snapshot.append("not exposed by this Android version");
+        }
+        snapshot.append("\nDNS servers: ");
+        if(props.getDnsServers().isEmpty())
+            snapshot.append("not reported");
+        else {
+            for(int i = 0; i < props.getDnsServers().size(); i++) {
+                if(i > 0) snapshot.append(", ");
+                snapshot.append(props.getDnsServers().get(i).getHostAddress());
+            }
+        }
+        snapshot.append("\nDefault gateway: ");
+        String gateway = null;
+        for(android.net.RouteInfo route: props.getRoutes()) {
+            if(route.isDefaultRoute() && route.getGateway() != null && !route.getGateway().isAnyLocalAddress()) {
+                gateway = route.getGateway().getHostAddress();
+                break;
+            }
+        }
+        snapshot.append(gateway == null ? "not reported" : gateway);
+        snapshot.append("\nAndroid network check: ");
+        snapshot.append(caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_CAPTIVE_PORTAL) ?
+                "captive portal detected" : caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) ?
+                "Internet validated (this does not mean the network is trusted)" : "not validated yet");
+        snapshot.append("\nAndroid Private DNS: ");
+        snapshot.append(inst.mPrivateDnsMode == null ? "unknown" : inst.mPrivateDnsMode.toString());
+        return snapshot.toString();
     }
 
     public static @NonNull CaptureService requireInstance() {
