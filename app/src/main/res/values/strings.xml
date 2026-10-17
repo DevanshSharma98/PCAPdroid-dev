@@ -94,7 +94,7 @@
     <string name="app_not_found">Could not find the "%1$s" app</string>
     <string name="stats">Stats</string>
     <string name="sigint_hunt">SIGINT Hunt</string>
-    <string name="sigint_about">Passive analysis of the current capture. Findings are clues to investigate, not proof of malicious activity. SSID and location permissions are not used.</string>
+    <string name="sigint_about">Local investigation of captured connections, DNS/domain clues, timing, network details, and parsed HTTP metadata. Findings are leads, not proof. Cross-capture history stores app/domain/IP/ASN metadata in this app’s private database. It does not store packet bodies or HTTP query strings. Payload fingerprints use only a short captured sample and are not whole-file hashes. SSID and location permissions are not used.</string>
     <string name="sigint_network_snapshot_title">Upstream network snapshot</string>
     <string name="sigint_findings_title">Behavior findings</string>
     <string name="sigint_refresh">Refresh findings</string>

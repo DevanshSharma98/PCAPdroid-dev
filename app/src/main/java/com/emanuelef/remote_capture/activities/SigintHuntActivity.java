@@ -18,6 +18,7 @@ import com.emanuelef.remote_capture.CaptureService;
 import com.emanuelef.remote_capture.ConnectionsRegister;
 import com.emanuelef.remote_capture.R;
 import com.emanuelef.remote_capture.SigintAnalyzer;
+import com.emanuelef.remote_capture.SigintHistory;
 import com.emanuelef.remote_capture.model.ConnectionDescriptor;
 
 import java.util.ArrayList;
@@ -81,7 +82,17 @@ public class SigintHuntActivity extends BaseActivity {
                 connections.add(conn);
         }
 
-        List<String> findings = SigintAnalyzer.analyze(connections, new AppsResolver(this));
+        List<String> history = new ArrayList<>();
+        long captureId = CaptureService.getCaptureStartTime();
+        if(captureId > 0) {
+            SigintHistory store = new SigintHistory(this);
+            try {
+                history = store.record(captureId, connections);
+            } finally {
+                store.close();
+            }
+        }
+        List<String> findings = SigintAnalyzer.analyze(connections, new AppsResolver(this), history, CaptureService.getHttpLog());
         StringBuilder report = new StringBuilder();
         report.append(getString(R.string.sigint_connection_count, connections.size())).append("\n\n");
         for(String finding: findings)
