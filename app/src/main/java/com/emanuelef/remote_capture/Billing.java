@@ -104,6 +104,11 @@ public class Billing {
     }
 
     public boolean isPurchased(String sku) {
+        // This fork makes PCAPdroid's built-in firewall available without a license.
+        // Keep the other paid feature checks unchanged.
+        if(FIREWALL_SKU.equals(sku))
+            return true;
+
         if(mPeerSkus.contains(sku))
             return true;
 
