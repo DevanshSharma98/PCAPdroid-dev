@@ -15,6 +15,11 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
+
+    - name: Set up Android SDK
+      uses: android-actions/setup-android@v4
+      with:
+        packages: 'ndk;28.2.13676358 cmake;3.22.1'
         
     - run: ./gradlew test
     - run: ./gradlew assembleStandardDebug -PdoNotStrip
