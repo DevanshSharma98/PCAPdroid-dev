@@ -684,6 +684,7 @@ public class ConnectionInvestigationActivity extends BaseActivity implements Con
                 .setPositiveButton("Resolve", (d, w) -> runDnsTest(host)).show();
     }
 
+    @SuppressWarnings("deprecation") // getInstance is required for Android versions below API 37
     private void runDnsTest(String host) {
         if (Build.VERSION.SDK_INT < 29) {
             mActiveResult.setText("DNS check requires Android 10 (API 29) or later; no lookup was sent.");
@@ -745,7 +746,8 @@ public class ConnectionInvestigationActivity extends BaseActivity implements Con
             try (Socket raw = new Socket()) {
                 raw.connect(new InetSocketAddress(ip, port), 3000);
                 raw.setSoTimeout(3000);
-                try (SSLSocket tls = (SSLSocket) SSLSocketFactory.getDefault().createSocket(raw, host, port, true)) {
+                SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+                try (SSLSocket tls = (SSLSocket) factory.createSocket(raw, host, port, true)) {
                     SSLParameters parameters = tls.getSSLParameters();
                     parameters.setEndpointIdentificationAlgorithm("HTTPS");
                     if (Build.VERSION.SDK_INT >= 24) parameters.setServerNames(Collections.singletonList(new SNIHostName(host)));
