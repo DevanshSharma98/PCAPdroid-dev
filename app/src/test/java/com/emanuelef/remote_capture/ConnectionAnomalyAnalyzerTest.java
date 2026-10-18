@@ -34,7 +34,7 @@ public class ConnectionAnomalyAnalyzerTest {
                 List.of(connection), Collections.emptyList()));
         assertTrue(rendered.contains("Captured outbound bytes"));
         assertTrue(rendered.contains("backup"));
-        assertTrue(rendered.contains("do not reveal payload contents"));
+        assertTrue(rendered.contains("does not reveal payload contents"));
         assertFalse(rendered.toLowerCase().contains("exfiltrated"));
     }
 
