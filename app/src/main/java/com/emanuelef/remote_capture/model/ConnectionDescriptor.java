@@ -112,6 +112,8 @@ public class ConnectionDescriptor implements HTTPReassembly.ReassemblyListener {
     public String info;
     public String url;
     public String l7proto;
+    /** Bounded, non-payload metadata exposed by the existing nDPI parser. */
+    public String protocol_details = "";
     private final PayloadIndex payload_chunks; // must be synchronized
     public final int uid;
     public final int ifidx;
@@ -200,6 +202,8 @@ public class ConnectionDescriptor implements HTTPReassembly.ReassemblyListener {
             info = update.info;
             url = update.url;
             l7proto = update.l7proto;
+            if(update.protocol_details != null)
+                protocol_details = update.protocol_details;
             encrypted_l7 = ((update.info_flags & ConnectionUpdate.UPDATE_INFO_FLAG_ENCRYPTED_L7) != 0);
         }
         if((update.update_type & ConnectionUpdate.UPDATE_PAYLOAD) != 0) {

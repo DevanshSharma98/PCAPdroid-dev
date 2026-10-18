@@ -45,6 +45,7 @@ public class ConnectionUpdate {
     public String info;
     public String url;
     public String l7proto;
+    public String protocol_details;
 
     /* set if update_type & UPDATE_PAYLOAD */
     public ArrayList<PayloadChunk> payload_chunks;
@@ -78,6 +79,11 @@ public class ConnectionUpdate {
         url = _url;
         l7proto = _l7proto;
         info_flags = flags;
+    }
+
+    public void setProtocolDetails(String details) {
+        protocol_details = details;
+        update_type |= UPDATE_INFO;
     }
 
     public void setPayload(ArrayList<PayloadChunk> _chunks, int flags) {

@@ -193,6 +193,15 @@ static jobject getConnUpdate(pcapdroid_t *pd, const conn_and_tuple_t *conn) {
         if(info && url && l7proto) {
             (*env)->CallVoidMethod(env, update, mids.connUpdateSetInfo, info, url, l7proto, flags);
             failed = jniCheckException(env);
+            if(!failed) {
+                jobject details = jniNewStringUTF(env, data->protocol_details ? data->protocol_details : "");
+                if(details) {
+                    (*env)->CallVoidMethod(env, update, mids.connUpdateSetProtocolDetails, details);
+                    failed = jniCheckException(env);
+                    (*env)->DeleteLocalRef(env, details);
+                } else
+                    failed = true;
+            }
         } else
             failed = true;
 
@@ -629,6 +638,7 @@ static void init_jni(JNIEnv *env) {
     mids.connUpdateInit = jniGetMethodID(env, cls.conn_update, "<init>", "(I)V");
     mids.connUpdateSetStats = jniGetMethodID(env, cls.conn_update, "setStats", "(JJJJIIIII)V");
     mids.connUpdateSetInfo = jniGetMethodID(env, cls.conn_update, "setInfo", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V");
+    mids.connUpdateSetProtocolDetails = jniGetMethodID(env, cls.conn_update, "setProtocolDetails", "(Ljava/lang/String;)V");
     mids.connUpdateSetPayload = jniGetMethodID(env, cls.conn_update, "setPayload", "(Ljava/util/ArrayList;I)V");
     mids.statsInit = jniGetMethodID(env, cls.stats, "<init>", "()V");
     mids.statsSetData = jniGetMethodID(env, cls.stats, "setData", "(Ljava/lang/String;JJJJJIIIIIIIII)V");

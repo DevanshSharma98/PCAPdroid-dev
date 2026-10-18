@@ -45,6 +45,7 @@ import com.emanuelef.remote_capture.ConnectionsRegister;
 import com.emanuelef.remote_capture.R;
 import com.emanuelef.remote_capture.Utils;
 import com.emanuelef.remote_capture.activities.ConnectionDetailsActivity;
+import com.emanuelef.remote_capture.activities.ConnectionInvestigationActivity;
 import com.emanuelef.remote_capture.activities.MainActivity;
 import com.emanuelef.remote_capture.activities.MenuActionHandler;
 import com.emanuelef.remote_capture.model.AppDescriptor;
@@ -147,6 +148,12 @@ public class ConnectionOverview extends Fragment implements ConnectionDetailsAct
             mActivity.finish();
             return;
         }
+
+        view.findViewById(R.id.investigate_connection).setOnClickListener(v -> {
+            Intent intent = new Intent(requireContext(), ConnectionInvestigationActivity.class);
+            intent.putExtra(ConnectionDetailsActivity.CONN_ID_KEY, mConn.incr_id);
+            startActivity(intent);
+        });
 
         view.findViewById(R.id.whois_ip).setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://search.arin.net/rdap/?query=" + mConn.dst_ip));

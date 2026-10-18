@@ -134,7 +134,9 @@ typedef struct {
     bool payload_truncated;
     bool has_payload[2]; // [0]: rx, [1] tx
     bool has_decrypted_data;
+    uint8_t tls_metadata_mask;
     char *url;
+    char *protocol_details;
     uint8_t update_type;
 } pd_conn_t;
 
@@ -357,6 +359,7 @@ typedef struct {
     jmethodID connUpdateInit;
     jmethodID connUpdateSetStats;
     jmethodID connUpdateSetInfo;
+    jmethodID connUpdateSetProtocolDetails;
     jmethodID connUpdateSetPayload;
     jmethodID sendServiceStatus;
     jmethodID sendStatsDump;

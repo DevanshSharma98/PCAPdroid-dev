@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorActionBar"
+            android:theme="@style/AppBarOverlay" />
+    </com.google.android.material.appbar.AppBarLayout>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
+        android:fillViewport="true">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+            <TextView
+                android:id="@+id/investigation_state"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/investigation_evidence"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:lineSpacingExtra="4dp"
+                android:textIsSelectable="true" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/investigation_findings_title"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/investigation_findings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:lineSpacingExtra="4dp"
+                android:textIsSelectable="true" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/investigation_packets"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/investigation_open_packet_details" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/investigation_decryption_settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/investigation_decryption_settings" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/investigation_rdap"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/investigation_rdap_action" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/investigation_ct"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/investigation_ct_action" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/investigation_vt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/investigation_vt_action" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/investigation_abuseipdb"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/investigation_abuseipdb_action" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/investigation_api_keys"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/investigation_api_keys_action" />
+            <TextView
+                android:id="@+id/investigation_intelligence"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:lineSpacingExtra="4dp"
+                android:textIsSelectable="true" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/investigation_active_tests_title"
+                android:textStyle="bold" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/investigation_tcp_test"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/investigation_tcp_test_action" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/investigation_dns_test"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/investigation_dns_test_action" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/investigation_tls_test"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/investigation_tls_test_action" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/investigation_http_test"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/investigation_http_test_action" />
+            <TextView
+                android:id="@+id/investigation_active_result"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="4dp"
+                android:textIsSelectable="true" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/investigation_share_report"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/investigation_share_report" />
+        </LinearLayout>
+    </ScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

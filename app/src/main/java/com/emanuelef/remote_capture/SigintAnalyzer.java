@@ -226,7 +226,12 @@ public final class SigintAnalyzer {
     }
 
     private static boolean isPeriodic(List<Long> starts) {
-        if(starts.size() < MIN_BEACON_SAMPLES) return false;
+        return periodicMedianInterval(starts) > 0;
+    }
+
+    /** Returns a representative beacon interval in milliseconds, or zero if the samples are too sparse/noisy. */
+    public static long periodicMedianInterval(List<Long> starts) {
+        if(starts.size() < MIN_BEACON_SAMPLES) return 0;
         Collections.sort(starts);
         List<Long> intervals = new ArrayList<>();
         for(int i = 1; i < starts.size(); i++) {
@@ -234,14 +239,14 @@ public final class SigintAnalyzer {
             if(interval >= MIN_BEACON_INTERVAL_MS)
                 intervals.add(interval);
         }
-        if(intervals.size() < MIN_BEACON_SAMPLES - 1) return false;
+        if(intervals.size() < MIN_BEACON_SAMPLES - 1) return 0;
         long median = median(intervals);
-        if(median == 0) return false;
+        if(median == 0) return 0;
         List<Long> deviations = new ArrayList<>();
         for(long interval: intervals)
             deviations.add(Math.abs(interval - median));
         // Median absolute deviation is robust to one delayed/background connection.
-        return (double) median(deviations) / median <= 0.20;
+        return (double) median(deviations) / median <= 0.20 ? median : 0;
     }
 
     private static long medianIntervals(List<Long> starts) {

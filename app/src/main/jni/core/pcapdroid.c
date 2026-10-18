@@ -19,6 +19,9 @@
 
 #include <inttypes.h>
 #include <assert.h> // NOTE: look for "assertion" in logcat
+#include <arpa/inet.h>
+#include <stdio.h>
+#include <string.h>
 #include <pthread.h>
 #include "pcapdroid.h"
 #include "pcap_dump.h"
@@ -305,6 +308,8 @@ void pd_purge_connection(pcapdroid_t *pd, pd_conn_t *data) {
         pd_free(data->info);
     if(data->url)
         pd_free(data->url);
+    if(data->protocol_details)
+        pd_free(data->protocol_details);
 
 #ifdef ANDROID
     if(data->payload_chunks)
@@ -432,6 +437,17 @@ struct ndpi_detection_module_struct* init_ndpi() {
         log_e("ndpi_init_detection_module returned NULL");
         return(NULL);
     }
+
+    /* Reuse nDPI's bounded metadata parsers. Payload bytes remain controlled by
+       the existing payload mode; these settings only expose handshake/DNS fields. */
+    ndpi_set_config(ndpi, "tls", "metadata.sha1_fingerprint", "enable");
+    ndpi_set_config(ndpi, "tls", "metadata.versions_supported", "enable");
+    ndpi_set_config(ndpi, "tls", "metadata.alpn_negotiated", "enable");
+    ndpi_set_config(ndpi, "tls", "metadata.cert_server_names", "enable");
+    ndpi_set_config(ndpi, "tls", "metadata.cert_validity", "enable");
+    ndpi_set_config(ndpi, "tls", "metadata.cert_issuer", "enable");
+    ndpi_set_config(ndpi, "tls", "metadata.cert_subject", "enable");
+    ndpi_set_config(ndpi, "tls", "metadata.ja3s_fingerprint", "enable");
 
     // nDPI 5.0: all protocols are enabled by default, no need to set a bitmask
 
@@ -936,6 +952,8 @@ static void process_dns_reply(pd_conn_t *data, pcapdroid_t *pd, const struct zdt
     dns_packet_t *dns = (dns_packet_t*)pkt->l7;
 
     if(((ntohs(dns->flags) & 0x8000) == 0x8000) && (dns->questions != 0) && (dns->answ_rrs != 0)) {
+        /* nDPI has parsed the matching response fields, including A/AAAA and TTL. */
+        data->update_type |= CONN_UPDATE_INFO;
         u_char *reply = dns->queries;
         int len = pkt->l7_len - sizeof(dns_packet_t);
         int num_queries = ntohs(dns->questions);
@@ -1002,6 +1020,94 @@ static void process_dns_reply(pd_conn_t *data, pcapdroid_t *pd, const struct zdt
     }
 }
 
+/* Copy only bounded metadata parsed by nDPI. No packet payload is retained here. */
+static void append_detail(char *out, size_t cap, const char *label, const char *value) {
+    if(!value || !value[0] || !cap)
+        return;
+    size_t used = strlen(out);
+    if(used >= cap)
+        return;
+    int n = snprintf(out + used, cap - used, "%s: ", label);
+    if(n < 0 || (size_t)n >= cap - used)
+        return;
+    used += (size_t)n;
+    for(size_t i = 0; value[i] && used + 2 < cap && i < 256; i++) {
+        unsigned char c = (unsigned char)value[i];
+        out[used++] = (c < 0x20 || c == '|') ? ' ' : (char)c;
+    }
+    out[used++] = '\n';
+    out[used] = '\0';
+}
+
+static void append_number(char *out, size_t cap, const char *label, unsigned long value) {
+    char text[32];
+    snprintf(text, sizeof(text), "%lu", value);
+    append_detail(out, cap, label, text);
+}
+
+static void update_protocol_details(pd_conn_t *data) {
+    if(!data->ndpi_flow)
+        return;
+    char details[1536] = {0};
+    const struct ndpi_flow_struct *flow = data->ndpi_flow;
+
+    if(data->l7proto == NDPI_PROTOCOL_DNS) {
+        const unsigned answers = flow->protos.dns.num_answers;
+        if(!answers && !flow->protos.dns.reply_code)
+            return;
+        append_number(details, sizeof(details), "DNS response code", flow->protos.dns.reply_code);
+        append_number(details, sizeof(details), "DNS query type", flow->protos.dns.query_type);
+        append_number(details, sizeof(details), "DNS answer count", answers);
+        for(unsigned i = 0; i < flow->protos.dns.num_rsp_addr && i < MAX_NUM_DNS_RSP_ADDRESSES; i++) {
+            char address[INET6_ADDRSTRLEN] = {0};
+            int family = flow->protos.dns.is_rsp_addr_ipv6[i] ? AF_INET6 : AF_INET;
+            const void *addr = flow->protos.dns.is_rsp_addr_ipv6[i] ?
+                    (const void *)&flow->protos.dns.rsp_addr[i].ipv6 :
+                    (const void *)&flow->protos.dns.rsp_addr[i].ipv4;
+            if(inet_ntop(family, addr, address, sizeof(address))) {
+                char label[32];
+                snprintf(label, sizeof(label), "DNS address answer %u", i + 1);
+                append_detail(details, sizeof(details), label, address);
+                snprintf(label, sizeof(label), "DNS answer %u TTL seconds", i + 1);
+                append_number(details, sizeof(details), label, flow->protos.dns.rsp_addr_ttl[i]);
+            }
+        }
+    } else if(data->l7proto == NDPI_PROTOCOL_TLS || data->l7proto == NDPI_PROTOCOL_QUIC) {
+        const __typeof__(flow->protos.tls_quic) *tls = &flow->protos.tls_quic;
+        if(tls->ssl_version) {
+            char version[24];
+            snprintf(version, sizeof(version), "0x%04x", tls->ssl_version);
+            append_detail(details, sizeof(details), "TLS negotiated version", version);
+        }
+        append_detail(details, sizeof(details), "TLS supported versions", tls->tls_supported_versions);
+        append_detail(details, sizeof(details), "TLS negotiated ALPN", tls->negotiated_alpn);
+        append_detail(details, sizeof(details), "Certificate DNS names", tls->server_names);
+        append_detail(details, sizeof(details), "Certificate issuer", tls->issuerDN);
+        append_detail(details, sizeof(details), "Certificate subject", tls->subjectDN);
+        if(tls->notBefore || tls->notAfter) {
+            append_number(details, sizeof(details), "Certificate not-before Unix time", tls->notBefore);
+            append_number(details, sizeof(details), "Certificate not-after Unix time", tls->notAfter);
+        }
+        if(tls->fingerprint_set) {
+            char fingerprint[41];
+            for(unsigned i = 0; i < sizeof(tls->sha1_certificate_fingerprint); i++)
+                snprintf(fingerprint + (i * 2), sizeof(fingerprint) - (i * 2), "%02x", tls->sha1_certificate_fingerprint[i]);
+            append_detail(details, sizeof(details), "Certificate SHA-1 fingerprint", fingerprint);
+        }
+        append_detail(details, sizeof(details), "JA3S server fingerprint", tls->ja3_server);
+    }
+
+    if(!details[0] || (data->protocol_details && strcmp(details, data->protocol_details) == 0))
+        return;
+    char *copy = pd_strndup(details, sizeof(details) - 1);
+    if(!copy)
+        return;
+    if(data->protocol_details)
+        pd_free(data->protocol_details);
+    data->protocol_details = copy;
+    data->update_type |= CONN_UPDATE_INFO;
+}
+
 /* ******************************************************* */
 
 static void perform_dpi(pcapdroid_t *pd, pkt_context_t *pctx) {
@@ -1018,10 +1124,33 @@ static void perform_dpi(pcapdroid_t *pd, pkt_context_t *pctx) {
     if(old_proto != data->l7proto) {
         data->update_type |= CONN_UPDATE_INFO;
         data->encrypted_l7 = is_encrypted_l7(pd->ndpi, data->l7proto);
+        if(data->protocol_details) {
+            pd_free(data->protocol_details);
+            data->protocol_details = NULL;
+        }
+        data->tls_metadata_mask = 0;
+    }
+
+    if(data->ndpi_flow && (data->l7proto == NDPI_PROTOCOL_TLS || data->l7proto == NDPI_PROTOCOL_QUIC)) {
+        const struct ndpi_flow_struct *flow = data->ndpi_flow;
+        uint8_t mask = 0;
+        if(flow->protos.tls_quic.ssl_version) mask |= 0x01;
+        if(flow->protos.tls_quic.negotiated_alpn) mask |= 0x02;
+        if(flow->protos.tls_quic.ja3_server[0]) mask |= 0x04;
+        if(flow->protos.tls_quic.fingerprint_set) mask |= 0x08;
+        if(flow->protos.tls_quic.issuerDN) mask |= 0x10;
+        if(flow->protos.tls_quic.subjectDN) mask |= 0x20;
+        if(flow->protos.tls_quic.server_names) mask |= 0x40;
+        if((mask & ~data->tls_metadata_mask) != 0) {
+            data->tls_metadata_mask |= mask;
+            data->update_type |= CONN_UPDATE_INFO;
+        }
     }
 
     if(!is_tx && (data->l7proto == NDPI_PROTOCOL_DNS))
         process_dns_reply(data, pd, pkt);
+
+    update_protocol_details(data);
 
     if(giveup || ((data->l7proto != NDPI_PROTOCOL_UNKNOWN) &&
             (n_proto.state >= NDPI_STATE_MONITORING)))

@@ -63,6 +63,8 @@
         <activity
             android:name=".activities.ConnectionDetailsActivity" />
         <activity
+            android:name=".activities.ConnectionInvestigationActivity" />
+        <activity
             android:name=".activities.AppDetailsActivity" />
         <activity
             android:name=".activities.ConnectionsActivity" />
